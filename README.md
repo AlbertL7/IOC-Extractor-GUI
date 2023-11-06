@@ -44,7 +44,7 @@ So I decided to make an IOC extractor myself that also integrates with virus tot
 - Create an SQL backend to query past saved IOC's easily.
 - Integrate more VirusTotal API features (grab sigma rules based on file behavior)
 - Integrate Rate limiting for VirusTotal API
-- Add a CTL+F search function for the app
+- Possible make the output text interactive and remove "remove ioc" buttons
 
 ## Warning 
 - There is no rate limiting for the VirusTotal API queries so if you are submitting a giant amount of hashes / URL's for analysis you may cause a DOS on VirusTotal and get your IP blocked.
