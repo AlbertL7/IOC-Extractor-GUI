@@ -24,6 +24,7 @@ So I decided to make an IOC extractor myself that also integrates with virus tot
 - Interactive Text Input: Users can paste or input text for analysis.
 - IOC Review: Extracted IOCs are displayed for review.
 - Text Highlighting: Highlights the relevant IOCs that have been matched in the input text area for easy review.
+- Regex match input text with find and replace capabilities.
   
 ### IOC Interaction
 - Defanging: Converts standard IOCs into a 'defanged' format, making them non-clickable and safe for sharing.
