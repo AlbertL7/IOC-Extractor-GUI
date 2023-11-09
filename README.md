@@ -2,7 +2,7 @@
 
 There are a lot of IOC extractor programs out there but none that I could find that integrate a GUI that you do not have to pay for at least.
 
-So I decided to make an IOC extractor myself that also integrates with virus total for easy analysis. I recently found myself using it at my job to not only analyse IOC's in Articles found on the internet but to comb through email headers and pick out the different email addresses and IP addresses associated to the email. Another main use for this application at work that I found helpful is extracting IOC's from Internet articles or CTI reports that come in and require review. It makes life a little bit easier.
+So I decided to make an IOC extractor myself that also integrates with virus total for easy analysis. I recently found myself using it at my job to not only analyse IOC's in Articles found on the internet but to comb through email headers and pick out the different email addresses and IP addresses associated to the email. Another main use for this application at work that I found helpful is extracting IOC's from Internet articles or CTI reports that come in and require review. It makes life a little bit easier. You can combine this with the Poor-Mans-Cyber-Threat-Feed applications I made to create a very cheap cyber threat feed. https://github.com/AlbertL7/The-PoorMans-Cyber-Threat-Feed
 
 ## Features
 ### IOC Parsing
