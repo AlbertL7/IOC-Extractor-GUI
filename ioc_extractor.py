@@ -1,8 +1,3 @@
-# TLD's in the Domains key was pulled from https://data.iana.org/TLD/tlds-alpha-by-domain.txt
-# File Names does not catch files with spaces correctly. Example: "test example.exe" ---> "testexample.exe". Note some file extensions and TLD's share the same name so duplicate results may occur in different categories.
-# Domains does not capture SLD's correctly. Example: "example.uk.co ---> uk.co", this will most likely be picked up in the URL's section. 
-# IPv6 was updated but still needs work, most of the time it catches "::" or variation of it when no IPv6 addresses are present. 
-
 import re
 from datetime import datetime
 import base64
@@ -19,8 +14,8 @@ import platform
 
 SEPARATOR_DEFANGS = r"[\(\)\[\]{}<>\\]"
 END_PUNCTUATION = r"[\.\?>\"'\)!,}:;\u201d\u2019\uff1e\uff1c\]]*"
-ipv4RegExpString ="\b(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\b" 
-v6seg = "[a-fA-F\\d]{1,4}"
+ipv4RegExpString = """\b(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\b{2}|[1-9]?\d)\b""" 
+v6seg = "[a-fA-F\\b]{1,4}"
 ipv6RegExpString = (
     "("
     f"(?:{v6seg}:){{7}}{v6seg}|"
@@ -94,11 +89,6 @@ class IOCExtractor(tk.Tk):
         self.save_folder_button = tk.Button(self, text="Save Individually", command=self.save_iocs_to_folder, fg='black', bg='Burlywood')
         self.save_folder_button.pack(side=tk.RIGHT, fill='x')
         # Button to Add an IOC to a Category
-        self.modify_iocs_button = tk.Button(self, text="Add IOC", command=self.add_ioc_to_category, fg='black', bg='Burlywood')
-        self.modify_iocs_button.pack(side=tk.RIGHT, fill='x')
-        # Button to Remove an IOC from a Category or From all Categories
-        self.remove_ioc_button = tk.Button(self, text="Remove IOC", command=self.remove_ioc, fg='black', bg='Burlywood')
-        self.remove_ioc_button.pack(side=tk.RIGHT, fill='x')
         os_type = platform.system()
         # Save VirusTotal Output frame
         if os_type == "Windows":
@@ -658,34 +648,6 @@ class IOCExtractor(tk.Tk):
         return filtered
 
     def parse_iocs(self):
-        original_regexes = { 
-        'IPv4': re.compile(r'\b(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)\b'),
-        'IPv6': re.compile(ipv6RegExpString, re.IGNORECASE),
-        'Domains': re.compile((r"(?<![@a-zA-Z0-9._%+-])([a-zA-Z0-9\-]+(?:\.|\[\.\]){0})\b").format(TLD)),
-        'Sub Domains': re.compile(r'(?<![@a-zA-Z0-9._%+-])(?:[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(?:\.|\[\.]))+[a-zA-Z0-9](?:[a-zA-Z0-9\-]{0,61}[a-zA-Z0-9])?(?:\.|\[\.])[a-zA-Z]{2,}'),
-        'URLs': re.compile(r"((?!.*[a-zA-Z0-9]{16,}(\[\.\]|\.)onion\/)[fhstu]\S\S?[px]s?(?::\/\/|:\\\\|\[:\]\/\/|\[:\/\/\]|:?__)(?:\x20|" + SEPARATOR_DEFANGS + r")*\w\S+?(?:\x20[\/\.][^\.\/\s]\S*?)*)(?=\s|[^\x00-\x7F]|$)", re.IGNORECASE | re.VERBOSE | re.UNICODE), 
-        'IP URL': re.compile(r'hxxps?:\/\/(?:\d{1,3}\.|\[\.\])?(?:\d{1,3}\.|\[\.\])?(?:\d{1,3}\.|\[\.\])?\d{1,3}(?:\[\.\]\d{1,3})?\/\d+\/[a-f0-9]+'), 
-        'md5': re.compile(r'\b[a-fA-F0-9]{32}\b'), 
-        'sha1': re.compile(r'\b[a-fA-F0-9]{40}\b'), 
-        'sha256': re.compile(r'\b[a-fA-F0-9]{64}\b'),
-        'sha512': re.compile(r'\b[A-Fa-f0-9]{128}\b'),
-        'SS-Deep':re.compile(r'\b(?=.{60})\d+:[A-Za-z0-9/+]+:[A-Za-z0-9/+]+\b'),
-        'CVEs': re.compile(r'(?:CVE-\d{4}-\d{4,}|CVE[\s\[\(]\d{4}-\d{4,}[\]\)])'),
-        #'File Names': re.compile((r"""(?<=[\"\'])+\s[^\"\']+\.{0}(?=[\"\'])|(?<![\"\'])\b[^'\" \t\n\r\f\v/\\]+?\.{0}\b(?![\"\'])""").format(FILE_EXTENSIONS), re.VERBOSE),
-        'File Names Outside Quotes': re.compile((r"""(?<=[\"\'])+\s[^\"\']+\.{0}(?=[\"\'])|(?<![\"\'])\b[^'\" \t\n\r\f\v/\-\\]+?\.{0}\b(?![\"\'])""").format(FILE_EXTENSIONS), re.VERBOSE),
-        'File Names Inside Quotes': re.compile((r"""(?<=[\"\'])+\s[^\"\']+\.{0}(?=[\"\'])|(?<![\"\'])\b[^'\" \t\n\r\f\v/\-\\]+?\.{0}""").format(FILE_EXTENSIONS), re.VERBOSE),
-        'Email Addresses': re.compile(r"""([a-z0-9_.+-]+[\(\[{\x20]*(?:(?:(?:\x20*""" + SEPARATOR_DEFANGS + r"""\x20*)*\.(?:\x20*""" + SEPARATOR_DEFANGS + r"""\x20*)*|\W+dot\W+)[a-z0-9-]+?)*[a-z0-9_.+-]+[\(\[{\x20]*(?:@|\Wat\W)[\)\]}\x20]*[a-z0-9-]+(?:(?:(?:\x20*""" + SEPARATOR_DEFANGS + r"""\x20*)*\.(?:\x20*""" + SEPARATOR_DEFANGS + r"""\x20*)*|\W+dot\W+)[a-z0-9-]+?)+)""" + END_PUNCTUATION + r"""(?=\s|$)""", re.IGNORECASE | re.VERBOSE | re.UNICODE,),
-        'Registry': re.compile(r'\b((HKLM|HKCU)\\[\\A-Za-z0-9-_]+)\b'),
-        'Mac Address': re.compile(r'\b(?:[A-Fa-f0-9]{2}([-:]))(?:[A-Fa-f0-9]{2}\1){4}[A-Fa-f0-9]{2}\b'),
-        'Bitcoin Addresses': re.compile(r'\b[13][a-km-zA-HJ-NP-Z0-9]{26,33}\b'),
-        'Dark Web': re.compile(r'[a-z2-7]{16,56}\.onion\b'),
-        'Yara Rules': re.compile(r"""(?:^|\s)((?:\s*?import\s+?"[^\r\n]*?[\r\n]+|\s*?include\s+?"[^\r\n]*?[\r\n]+|\s*?//[^\r\n]*[\r\n]+|\s*?/\*.*?\*/\s*?)*(?:\s*?private\s+|\s*?global\s+)*rule\s*?\w+\s*?(?::[\s\w]+)?\s+\{.*?condition\s*?:.*?\s*\})(?:$|\s)""",re.MULTILINE | re.DOTALL | re.VERBOSE,),
-        }
-
-        for category, regex in original_regexes.items():
-            if category not in regexes:
-                regexes[category] = regex
-
         self.article_input.tag_remove("highlight", "1.0", tk.END)
         article = self.article_input.get("1.0", tk.END)
         iocs = {key: set() for key in regexes.keys()}
@@ -759,7 +721,7 @@ class IOCExtractor(tk.Tk):
                     self.review_output.insert(tk.END, f"  {value}\n")
                 self.review_output.insert(tk.END, "\n")
                     
-        self.review_output.configure(state='disabled') 
+        self.review_output.configure(state='normal') 
 
     def defang_iocs(self):
         self.review_output.configure(state='normal')
@@ -861,198 +823,6 @@ class IOCExtractor(tk.Tk):
         except IOError as e:
             tk.messagebox.showerror("Error", f"Failed to write IOCs to file: {e}")
             # Optionally, you might want to log the error details somewhere for debugging.
-
-    def add_ioc_to_category(self):
-        category_window = tk.Toplevel(self)
-        category_window.title("Select Category")
-        category_listbox = tk.Listbox(category_window)
-
-        for category in regexes.keys():
-            category_listbox.insert(tk.END, category)
-        category_listbox.pack(pady=10, padx=10)
-
-        def on_add_ioc_button_click():
-            selected_category = category_listbox.get(category_listbox.curselection())
-            ioc_values = tk.simpledialog.askstring("Input", f"Enter the IOC(s) you want to add to '{selected_category}' (separate by space for multiple):")
-            known_categories = ["IPv4", "IPv6", "Domains", "Sub Domains", "URLs", "IP URL", "md5", "sha1", "sha256", "sha512", "SS-Deep", "CVEs", "File Names", "Email Addresses", "Registry", "Mac Addresses", "Bitcoin Addresses", "Yara Rules"]
-
-            if not ioc_values:
-                return
-
-            ioc_list = ioc_values.split(" ")
-            current_iocs = self.review_output.get("1.0", tk.END).splitlines()
-            category_index = None
-
-            for i, line in enumerate(current_iocs):
-                if line.startswith(selected_category + ":"):
-                    category_index = i
-                    break
-
-            if category_index is not None:
-                for ioc in ioc_list:
-                    current_iocs.insert(category_index + 1, "  " + ioc)
-                    category_index += 1 
-            else:
-                current_iocs.extend([selected_category + ":"])
-                current_iocs.extend(["  " + ioc for ioc in ioc_list])
-
-            self.review_output.configure(state='normal')
-            self.review_output.delete("1.0", tk.END)
-            for line in current_iocs:
-                if any(line.startswith(f"{cat}:") for cat in known_categories):
-                    self.review_output.insert(tk.END, f"{line}\n", "bold")
-                else:
-                    self.review_output.insert(tk.END, f"{line}\n")
-            #self.review_output.insert(tk.END, "\n".join(current_iocs))
-            self.review_output.configure(state='disabled')
-    
-            category_window.destroy()
-
-        select_button = tk.Button(category_window, text="Select", command=on_add_ioc_button_click)
-        select_button.pack(pady=10)
-
-    def remove_ioc(self):
-        category_window = tk.Toplevel(self)
-        category_window.title("Select Category")
-        category_listbox = tk.Listbox(category_window)
-
-        for category in regexes.keys():
-            category_listbox.insert(tk.END, category)
-        category_listbox.pack(pady=10, padx=10)
-
-        def on_remove_ioc_button_click():
-            selected_category = category_listbox.get(category_listbox.curselection())
-            ioc_values = tk.simpledialog.askstring("Input", f"Enter the IOC(s) you want to remove from '{selected_category}' (separate by space for multiple):")
-            known_categories = ["IPv4", "IPv6", "Domains", "Sub Domains", "URLs", "IP URL", "md5", "sha1", "sha256", "sha512", "SS-Deep", "CVEs", "File Names", "Email Addresses", "Registry", "Mac Addresses", "Bitcoin Addresses", "Yara Rules"]
-
-            if not ioc_values:
-                return
-            
-            ioc_list = ioc_values.split(" ")
-            current_iocs = self.review_output.get("1.0", tk.END).splitlines()
-            category_found = False
-            iocs_removed = 0
-            i = 0
-
-            while i < len(current_iocs):
-                line = current_iocs[i]
-                if line.startswith(selected_category + ":"):
-                    category_found = True
-                elif category_found and line.strip() in ioc_list:
-                    del current_iocs[i]
-                    iocs_removed += 1
-                    i -= 1  
-                i += 1
-
-            if not category_found:
-                tk.messagebox.showwarning("Warning", f"The category '{selected_category}' was not found in the list.")
-                return
-            elif iocs_removed == 0:
-                tk.messagebox.showwarning("Warning", "None of the specified IOCs were found in the list.")
-                return
-
-            self.review_output.configure(state='normal')
-            self.review_output.delete("1.0", tk.END)
-            for line in current_iocs:
-                if any(line.startswith(f"{cat}:") for cat in known_categories):
-                    self.review_output.insert(tk.END, f"{line}\n", "bold")
-                else:
-                    self.review_output.insert(tk.END, f"{line}\n")
-            #self.review_output.insert(tk.END, "\n".join(current_iocs))
-            self.review_output.configure(state='disabled')
-
-            category_window.destroy()
-
-        remove_ioc_button = tk.Button(category_window, text="Remove IOC from Category", command=on_remove_ioc_button_click)
-        remove_ioc_button.pack(pady=10)
-
-        def on_remove_from_all_button_click():
-            ioc_values = tk.simpledialog.askstring("Input", "Enter the IOC(s) you want to remove from all categories (separate by space for multiple):")
-            known_categories = ["IPv4", "IPv6", "Domains", "Sub Domains", "URLs", "IP URL", "md5", "sha1", "sha256", "sha512", "SS-Deep", "CVEs", "File Names", "Email Addresses", "Registry", "Mac Addresses", "Bitcoin Addresses", "Yara Rules"]  # Add all known categories here
-
-            if not ioc_values:
-                return
-
-            ioc_list = ioc_values.split() 
-            current_iocs = self.review_output.get("1.0", tk.END).splitlines()
-            iocs_removed = 0
-
-            for ioc in ioc_list:
-                i = 0
-                while i < len(current_iocs):
-                    line = current_iocs[i]
-                    if line.strip() == ioc:
-                        del current_iocs[i]
-                        iocs_removed += 1
-                        i -= 1 
-                    i += 1
-
-            if iocs_removed == 0:
-                tk.messagebox.showwarning("Warning", "None of the specified IOCs were found in the list.")
-                return
-            
-            self.review_output.configure(state='normal')
-            self.review_output.delete("1.0", tk.END)
-            for line in current_iocs:
-                if any(line.startswith(f"{cat}:") for cat in known_categories):
-                    self.review_output.insert(tk.END, f"{line}\n", "bold")
-                else:
-                    self.review_output.insert(tk.END, f"{line}\n")
-            #self.review_output.insert(tk.END, "\n".join(current_iocs))
-            self.review_output.configure(state='disabled')
-
-            category_window.destroy()
-
-        def on_remove_category_button_click():
-            selected_category = category_listbox.get(category_listbox.curselection())
-
-            # Confirm the user wants to remove the category
-            confirm = tk.messagebox.askyesno("Confirm Removal", f"Are you sure you want to remove the entire category '{selected_category}' and all its IOCs?")
-            if not confirm:
-                return
-
-            # Logic to remove the selected category and all its IOCs
-            regexes.pop(selected_category, None)  # Assuming 'regexes' is your data structure
-
-            # Also, if the IOCs are displayed in the GUI, you should update the GUI to reflect these deletions
-            current_iocs = self.review_output.get("1.0", tk.END).splitlines()
-            category_found = False
-            updated_iocs = []
-
-            known_categories = ["IPv4", "IPv6", "Domains", "Sub Domains", "URLs", "IP URL", "md5", "sha1", "sha256", "sha512", "SS-Deep", "CVEs", "File Names", "Email Addresses", "Registry", "Mac Addresses", "Bitcoin Addresses", "Yara Rules"]  # Add all known categories here
-
-            for line in current_iocs:
-                if line.startswith(selected_category + ":"):
-                    category_found = True
-                    continue  # Skip the category line itself
-                if category_found:
-                    if line.strip() == "" or any(line.startswith(f) for f in known_categories):  # New category starts
-                        category_found = False  # Reset flag when new category starts
-                    else:
-                        continue  # Skip the IOC lines under the category
-                if not category_found:
-                    updated_iocs.append(line)  # Add lines that are not part of the removed category
-
-            self.review_output.configure(state='normal')
-            self.review_output.delete("1.0", tk.END) 
-            for line in updated_iocs:
-                if any(line.startswith(f"{cat}:") for cat in known_categories):  # Check if the line is a known category
-                    self.review_output.insert(tk.END, f"{line}\n", "bold")  # Insert with the "bold" tag
-                else:
-                    self.review_output.insert(tk.END, f"{line}\n")
-            self.review_output.insert(tk.END, "\n")
-            #self.review_output.insert(tk.END, "\n".join(updated_iocs))
-            self.review_output.configure(state='disabled')
-
-            # Show a success message
-            tk.messagebox.showinfo("Success", f"Category '{selected_category}' and all its IOCs have been removed.")
-
-            category_window.destroy()
-
-        remove_from_all_button = tk.Button(category_window, text="Remove IOC from All", command=on_remove_from_all_button_click)
-        remove_from_all_button.pack(pady=10)
-        remove_category_button = tk.Button(category_window, text="Remove Entire Category", command=on_remove_category_button_click)
-        remove_category_button.pack(pady=10)
 
 app = IOCExtractor()
 app.mainloop()
