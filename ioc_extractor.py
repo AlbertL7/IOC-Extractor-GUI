@@ -1,6 +1,3 @@
-# Source code primarily from uploaded file: ioc_w_js.txt
-# Integrated user-provided VirusTotal functions.
-# Corrected API key stripping in get_vt_api_key.
 import re
 from datetime import datetime
 import base64
@@ -16,8 +13,6 @@ import subprocess # Added for running jsluice
 import shutil      # Added for checking if jsluice exists
 import tempfile    # Added for temporary file handling with jsluice
 
-# --- Using Original Regex definitions as requested ---
-# (Regex definitions remain the same) ...
 SEPARATOR_DEFANGS = r"[\(\)\[\]{}<>\\]"
 END_PUNCTUATION = r"[\.\?>\"'\)!,}:;\u201d\u2019\uff1e\uff1c\]]*"
 ipv4RegExpString = r"""\b(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(?:\.|\[\.\])(25[0-5]|2[0-4]\d|1\b{2}|[1-9]?\d)\b"""
@@ -64,17 +59,15 @@ regexes = {
 
 class IOCExtractor(tk.Tk):
     def __init__(self):
-        # (Initialization code remains the same up to creating widgets) ...
         super().__init__()
         self.title("IOC Extractor (Improved GUI - Original Regex + Jsluice)")
         self.geometry("1600x900")
 
-        # VT API Key storage (lowercase to match existing prompt method)
+        # VT API Key storage 
         self.vt_api_key = None
         self.found_iocs = {} # For parsed IOCs
 
         # --- Check for jsluice ---
-        # (jsluice check code remains the same) ...
         self.jsluice_path = shutil.which('jsluice')
         self.jsluice_needs_python = False
         self.jsluice_executable_or_script = None # Initialize to None
@@ -98,7 +91,6 @@ class IOCExtractor(tk.Tk):
              self.jsluice_base_command = [] # Or some default indicating not found
 
         # --- Top Frame for Find/Replace ---
-        # (Find/Replace frame setup remains the same) ...
         self.find_replace_frame = tk.Frame(self, bg='light grey')
         self.find_replace_frame.pack(side=tk.TOP, fill='x', padx=5, pady=5)
         self.find_label = tk.Label(self.find_replace_frame, text="Find:", bg='light grey'); self.find_label.grid(row=0, column=0, padx=5, pady=2, sticky='w')
@@ -124,6 +116,7 @@ class IOCExtractor(tk.Tk):
         self.article_input.insert(tk.END, "Input Text Here... Use hot keys for copy & paste")
         self.article_input.bind("<FocusIn>", self.on_input_focus_in)
         self.article_input.bind("<FocusOut>", self.on_input_focus_out)
+        
         # Configure Highlight Tags
         self.article_input.tag_configure("highlight", background="light green") # Tag for Find feature
         self.article_input.tag_configure("ioc_highlight", background="orange") # Tag for Parsed IOCs
@@ -233,29 +226,36 @@ Examples:
         # *** RENAME: General Shell Command Tab ***
         self.shell_command_frame = tk.Frame(self.output_notebook, bg='grey15') # Use a frame for structure
         self.shell_command_frame.pack(expand=True, fill='both')
+        
         # Output Area
         self.shell_command_output = scrolledtext.ScrolledText(self.shell_command_frame, wrap=tk.WORD, height=10, bg='grey10', fg='light cyan')
         self.shell_command_output.pack(side=tk.TOP, expand=True, fill='both', padx=5, pady=5)
+        
         # Updated initial text
         self.shell_command_output.insert(tk.END, "Enter any shell command below (e.g., cat file.js | jsluice urls, or echo '...' | grep ...)\n")
         self.shell_command_output.configure(state='disabled')
+        
         # Input Area Frame
         shell_input_frame = tk.Frame(self.shell_command_frame, bg='grey15')
         shell_input_frame.pack(side=tk.BOTTOM, fill='x', padx=5, pady=(0,5))
+        
         # Label
         shell_cmd_label = tk.Label(shell_input_frame, text="Command:", bg='grey15', fg='white') # Renamed Label text
         shell_cmd_label.pack(side=tk.LEFT, padx=(0,5))
+        
         # Entry
         self.shell_command_entry = tk.Entry(shell_input_frame, bg='grey30', fg='white', insertbackground='white') # Renamed Entry variable
         self.shell_command_entry.pack(side=tk.LEFT, expand=True, fill='x', padx=5)
+        
         # *** Bind Enter key to the NEW method name ***
         self.shell_command_entry.bind("<Return>", self.run_shell_command_event)
+        
         # Run Button - Always enabled now
         self.shell_command_button = tk.Button(shell_input_frame, text="Run Shell", command=self.run_shell_command, bg='dark orange', fg='black') # Renamed Button, changed text/color
         self.shell_command_button.pack(side=tk.RIGHT, padx=(5,0))
+        
         # Add the tab to notebook with new name
         self.output_notebook.add(self.shell_command_frame, text="Shell Command") # Renamed Tab Text
-
         self.main_pane.add(self.output_notebook, stretch="always")
 
         # ***** START NEW BOTTOM BUTTON LAYOUT *****
@@ -267,9 +267,11 @@ Examples:
 
         # --- Bottom Row 2: VT Buttons ---
         self.vt_button_frame = tk.Frame(self); self.vt_button_frame.pack(side=tk.BOTTOM, fill='x', padx=5, pady=2)
+        
         # Link to NEW VT Functions
         self.vt_button = tk.Button(self.vt_button_frame, text="VT Check Selected", command=self.on_vt_button_click, fg='black', bg='purple1'); self.vt_button.pack(side=tk.LEFT, padx=2, pady=2)
         self.submit_url_button = tk.Button(self.vt_button_frame, text="VT Submit URL(s)", command=self.submit_url_for_analysis, fg='black', bg='purple1'); self.submit_url_button.pack(side=tk.LEFT, padx=2, pady=2)
+        
         # VT Hash Check button calls on_vt_button_click, which handles hashes via query_virustotal
         self.submit_hash_button = tk.Button(self.vt_button_frame, text="VT Check Hash(es)", command=self.on_vt_button_click, fg='black', bg='purple1'); self.submit_hash_button.pack(side=tk.LEFT, padx=2, pady=2)
         self.all_hashes_button = tk.Button(self.vt_button_frame, text="VT Get Hash Details", command=self.get_all_hash_details, fg='black', bg='purple1'); self.all_hashes_button.pack(side=tk.LEFT, padx=2, pady=2)
@@ -317,7 +319,6 @@ Examples:
 
     def highlight_text(self):
         """Highlights text in the input area based on the Find entry box."""
-        # (Keep the user's highlight_text method as integrated previously) ...
         self.clear_highlight()
         find_text = self.find_entry.get()
         if not find_text.strip(): return
@@ -472,6 +473,7 @@ Examples:
   find . -name '*.js' | jsluice secrets -c 5 --patterns=apikeys.json
 """
         self.jsluice_results_output.insert(tk.END, jsluice_initial_help_text)
+        
         # Add back the warning if jsluice isn't found
         if not self.jsluice_path:
             self.jsluice_results_output.insert(tk.END, "\n\n-------\nWARNING: jsluice command not found or 'python' missing for .py script. 'Run Jsluice' button is disabled.\n-------")
@@ -510,7 +512,6 @@ Mode 'query':
             self.article_input.config(fg='grey')
 
     def find_and_replace(self):
-        # (Keep find_and_replace method) ...
         find_str = self.find_entry.get()
         replace_str = self.replace_entry.get()
         input_text_widget = self.article_input
@@ -538,7 +539,6 @@ Mode 'query':
         except Exception as e: messagebox.showerror("Error", f"An unexpected error occurred during replace: {e}")
 
     def save_input_text(self):
-        # (Keep save_input_text method) ...
         text_to_save = self.article_input.get("1.0", tk.END)
         if not text_to_save.strip() or text_to_save.strip() == "Input Text Here... Use hot keys for copy & paste": messagebox.showwarning("Empty Input", "There is no input text to save."); return
         file_path = filedialog.asksaveasfilename(defaultextension=".txt", filetypes=[("Text Files", "*.txt"), ("All Files", "*.*")], title="Save Input Text As")
@@ -549,7 +549,6 @@ Mode 'query':
             except Exception as e: messagebox.showerror("Save Error", f"Failed to save input text:\n{e}")
 
     def parse_iocs(self):
-        # (Keep modified parse_iocs method that includes highlighting) ...
         input_text = self.article_input.get("1.0", tk.END)
         if not input_text or input_text.strip() == "Input Text Here... Use hot keys for copy & paste": messagebox.showwarning("Input Missing", "Please provide text in the input box first."); return
         self.article_input.tag_remove("ioc_highlight", "1.0", tk.END)
@@ -579,7 +578,6 @@ Mode 'query':
         self.review_output.configure(state='disabled')
 
     def defang_iocs(self):
-        # (Keep defang_iocs method) ...
         self.review_output.configure(state='normal'); current_text = self.review_output.get("1.0", tk.END); self.review_output.configure(state='disabled')
         if not current_text.strip() or current_text.strip().startswith("Extracted IOCs"): messagebox.showwarning("No IOCs", "No IOCs extracted to defang. Parse first."); return
         defanged_text = current_text.replace('.', '[.]').replace('http', 'hxxp').replace('ftp', 'fxp')
@@ -587,7 +585,6 @@ Mode 'query':
         messagebox.showinfo("Defanged", "IOCs in the review box have been defanged.")
 
     def refang_iocs(self):
-        # (Keep refang_iocs method) ...
         self.review_output.configure(state='normal'); current_text = self.review_output.get("1.0", tk.END); self.review_output.configure(state='disabled')
         if not current_text.strip() or current_text.strip().startswith("Extracted IOCs"): messagebox.showwarning("No IOCs", "No IOCs extracted to refang. Parse first."); return
         refanged_text = current_text.replace('[.]', '.').replace('hxxp', 'http').replace('fxp', 'ftp')
@@ -596,7 +593,6 @@ Mode 'query':
 
     # --- Save Methods ---
     def save_iocs(self):
-        # (Keep save_iocs method) ...
         is_disabled = self.review_output['state'] == 'disabled';
         if is_disabled: self.review_output.configure(state='normal')
         text_to_save = self.review_output.get("1.0", "end-1c");
@@ -610,7 +606,6 @@ Mode 'query':
             except Exception as e: messagebox.showerror("Save Error", f"Failed to save IOCs:\n{e}")
 
     def save_iocs_to_folder(self):
-        # (Keep save_iocs_to_folder method) ...
         if not self.found_iocs: messagebox.showwarning("No IOCs", "No parsed IOCs found to save individually. Please parse text first."); return
         folder = filedialog.askdirectory(title="Select Folder to Save IOC Categories");
         if not folder: return
@@ -629,7 +624,6 @@ Mode 'query':
         else: messagebox.showwarning("No Data", "No valid IOC data found to save.")
 
     def save_vt_output(self):
-        # (Keep save_vt_output method) ...
         is_disabled = self.vt_results_output['state'] == 'disabled'
         if is_disabled: self.vt_results_output.configure(state='normal')
         text = self.vt_results_output.get("1.0", "end-1c")
@@ -643,7 +637,6 @@ Mode 'query':
             except Exception as e: messagebox.showerror("Save Error", f"Failed to save VT output:\n{e}")
 
     def save_jsluice_output(self):
-        # (Keep save_jsluice_output method) ...
         is_disabled = self.jsluice_results_output['state'] == 'disabled';
         if is_disabled: self.jsluice_results_output.configure(state='normal')
         text_to_save = self.jsluice_results_output.get("1.0", "end-1c").strip();
@@ -781,7 +774,6 @@ Mode 'query':
         return string_to_check.startswith("http://") or string_to_check.startswith("https://")
 
     def query_virustotal(self, ioc):
-        # (Keep query_virustotal method as generated previously, uses self.vt_api_key) ...
         if not self.vt_api_key: return "Error: VT API Key not available."
         headers = { "Accept": "application/json", "x-apikey": self.vt_api_key }
         report_link = "N/A"; api_url = None; ioc_type = "Unknown"
@@ -875,7 +867,6 @@ Mode 'query':
         self.vt_results_output.configure(state='disable')
 
     def get_hash_details(self, hash_value):
-        # (Keep get_hash_details method as generated previously) ...
         if not self.vt_api_key: return {"error": "API Key not available"}
         headers = { "Accept": "application/json", "x-apikey": self.vt_api_key }
         file_info_endpoint = f"https://www.virustotal.com/api/v3/files/{hash_value}"
@@ -920,7 +911,6 @@ Mode 'query':
          self.vt_results_output.configure(state='disable')
 
     def get_mitre_ttp_details(self, hash_value):
-        # (Keep get_mitre_ttp_details method as generated previously) ...
         if not self.vt_api_key: return {"error": "API Key not available"}
         headers = { "Accept": "application/json", "x-apikey": self.vt_api_key }
         ttp_info_endpoint = f"https://www.virustotal.com/api/v3/files/{hash_value}/behaviour_mitre_trees"
@@ -973,7 +963,7 @@ Mode 'query':
                         for ttp in ttp_details:
                             self.vt_results_output.insert(tk.END, f"  {ttp['id']}: {ttp['name']}\n")
                             self.vt_results_output.insert(tk.END, f"    Tactics: {', '.join(ttp['tactics'])}\n")
-                           # self.vt_results_output.insert(tk.END, f"    Link: {ttp['link']}\n") # Link optional
+                            self.vt_results_output.insert(tk.END, f"    Link: {ttp['link']}\n") # Link optional
                         self.vt_results_output.insert(tk.END, "\n")
                     else: self.vt_results_output.insert(tk.END, "  No specific MITRE Techniques extracted.\n\n")
                 elif isinstance(ttp_details, dict) and "error" in ttp_details: self.vt_results_output.insert(tk.END, f"  Error: {ttp_details['error']}\n\n", ("error"))
@@ -987,27 +977,27 @@ Mode 'query':
         """Runs jsluice using a timestamped temporary file and formats the output."""
         if not self.jsluice_path:
             messagebox.showerror("Jsluice Error", "jsluice command not found...")
-            return  # [cite: 703]
+            return  
         input_text = self.article_input.get("1.0", tk.END).strip()
         if not input_text or input_text == "Input Text Here... Use hot keys for copy & paste":
             messagebox.showwarning("Input Missing", "Provide text for jsluice.")
-            return  # [cite: 704]
+            return  
         selected_mode = self.jsluice_mode_combobox.get()
         if not selected_mode:
             messagebox.showerror("Jsluice Error", "Please select a jsluice mode.")
-            return  # [cite: 705]
+            return  
         custom_options_str = self.jsluice_options_entry.get().strip()
         additional_args = []
         if custom_options_str:
             try:
-                additional_args = shlex.split(custom_options_str) # [cite: 707]
+                additional_args = shlex.split(custom_options_str) 
             except ValueError as e:
                 messagebox.showerror("Jsluice Options Error", f"Error parsing options: {e}")
-                return # [cite: 708]
+                return 
         jsluice_command_args = [selected_mode] + additional_args
-        show_raw = bool(self.jsluice_raw_output_var.get()) # Checkbox state [cite: 708]
+        show_raw = bool(self.jsluice_raw_output_var.get()) 
 
-        self.jsluice_results_output.configure(state='normal') # [cite: 709]
+        self.jsluice_results_output.configure(state='normal') 
         self.jsluice_results_output.delete("1.0", tk.END)
         self.update_idletasks()
 
@@ -1018,7 +1008,7 @@ Mode 'query':
             # === START: Modified File Creation ===
             try:
                 temp_dir = tempfile.gettempdir() # Get system temp directory
-                now = datetime.now() # Get current time [cite: 503]
+                now = datetime.now() # Get current time 
                 timestamp = now.strftime("%Y%m%d_%H%M%S") # Format timestamp
                 # Define filename components
                 prefix = "jsluice_input_"
@@ -1043,73 +1033,73 @@ Mode 'query':
                 self.update_idletasks() # Ensure it shows up immediately
 
             # Run the subprocess using the new timestamped file path
-            final_command = self.jsluice_base_command + jsluice_command_args + [temp_input_filepath] # [cite: 711]
+            final_command = self.jsluice_base_command + jsluice_command_args + [temp_input_filepath] 
             # final_command_display = ' '.join(shlex.quote(arg) for arg in final_command) # Displaying command is optional
-            process = subprocess.run(final_command, capture_output=True, text=True, encoding='utf-8', errors='replace') # [cite: 711]
+            process = subprocess.run(final_command, capture_output=True, text=True, encoding='utf-8', errors='replace') 
 
-            # Process and display output (Your existing logic)
-            if process.returncode == 0: # [cite: 712]
+            # Process and display output 
+            if process.returncode == 0: 
                 self.jsluice_results_output.insert(tk.END, f"--- Jsluice Results ({selected_mode} mode) ---\n\n", ("bold"))
                 if not process.stdout.strip():
                     self.jsluice_results_output.insert(tk.END, "(No output produced by jsluice)\n")
-                elif show_raw: # [cite: 712]
+                elif show_raw: 
                      self.jsluice_results_output.insert(tk.END, process.stdout) # Display raw output
                 else:
                     # --- Try Formatted Output ---
-                    lines = process.stdout.strip().splitlines() # [cite: 713]
-                    categorized_results = {} # [cite: 713]
-                    unparsed_lines = [] # [cite: 714]
-                    parsed_json = False # [cite: 714]
+                    lines = process.stdout.strip().splitlines() 
+                    categorized_results = {} 
+                    unparsed_lines = [] 
+                    parsed_json = False 
                     for line in lines:
-                        kind = None # [cite: 715]
-                        match = None # [cite: 715]
+                        kind = None 
+                        match = None 
                         category = None
                         value_to_display = None
                         try:
-                            data = json.loads(line) # [cite: 716]
-                            parsed_json = True # [cite: 717]
-                            # (... your logic for parsing different modes ...)
+                            data = json.loads(line) 
+                            parsed_json = True 
+                            
                             if selected_mode == 'urls':
-                                url = data.get('url') # [cite: 718]
+                                url = data.get('url') 
                                 if url: category = "URLs"; value_to_display = url
                             elif selected_mode == 'secrets':
-                                kind = data.get('kind') # [cite: 719]
-                                match = data.get('match') # [cite: 719]
-                                if kind and match: category = "Secrets"; value_to_display = f"{kind}: {match}" # [cite: 721]
-                            elif selected_mode == 'query': category = "Query Results"; value_to_display = json.dumps(data) # [cite: 722]
+                                kind = data.get('kind') 
+                                match = data.get('match') 
+                                if kind and match: category = "Secrets"; value_to_display = f"{kind}: {match}" 
+                            elif selected_mode == 'query': category = "Query Results"; value_to_display = json.dumps(data) 
 
-                            if category is None: category = "Other JSON Data"; value_to_display = json.dumps(data) # [cite: 723]
+                            if category is None: category = "Other JSON Data"; value_to_display = json.dumps(data) 
 
                             if value_to_display is not None:
-                                category_set = categorized_results.setdefault(category, set()) # [cite: 724]
+                                category_set = categorized_results.setdefault(category, set()) 
                                 category_set.add(value_to_display)
-                        except json.JSONDecodeError: # [cite: 724]
+                        except json.JSONDecodeError: 
                             if line.strip(): unparsed_lines.append(line)
                     # --- Display Formatted Results ---
-                    if categorized_results: # [cite: 725]
+                    if categorized_results: 
                         for category, item_set in sorted(categorized_results.items()):
                             self.jsluice_results_output.insert(tk.END, f"--- {category} ---\n", ("bold"))
                             for item in sorted(list(item_set)):
                                 self.jsluice_results_output.insert(tk.END, item + "\n")
-                            self.jsluice_results_output.insert(tk.END, "\n") # [cite: 726]
-                    elif not parsed_json and process.stdout.strip(): # Fallback to raw if no JSON parsed [cite: 727]
+                            self.jsluice_results_output.insert(tk.END, "\n") 
+                    elif not parsed_json and process.stdout.strip(): # Fallback to raw if no JSON parsed 
                         mode_display_name = selected_mode.capitalize()
                         self.jsluice_results_output.insert(tk.END, f"--- Raw Output ({mode_display_name} Mode) ---\n", ("bold"))
                         self.jsluice_results_output.insert(tk.END, process.stdout + "\n\n")
-                    if parsed_json and unparsed_lines: # [cite: 728]
+                    if parsed_json and unparsed_lines: # 
                         self.jsluice_results_output.insert(tk.END, "--- Unparsed Lines / Non-JSON Data ---\n", ("bold", "error"))
                         self.jsluice_results_output.insert(tk.END, "\n".join(unparsed_lines) + "\n")
-            else: # Handle non-zero return code errors # [cite: 728]
+            else: # Handle non-zero return code errors 
                 self.jsluice_results_output.insert(tk.END, f"--- Jsluice Error (Exit Code: {process.returncode}) ---\n", ("error", "bold"))
                 if process.stderr:
                     self.jsluice_results_output.insert(tk.END, process.stderr + "\n", ("error"))
                 else:
                     self.jsluice_results_output.insert(tk.END, "(No error message on stderr)\n", ("error"))
-                if process.stdout: # Show stdout even on error if it exists [cite: 729, 730]
+                if process.stdout: # Show stdout even on error if it exists 
                     self.jsluice_results_output.insert(tk.END, "--- Stdout Received Before Error ---\n", ("bold"))
                     self.jsluice_results_output.insert(tk.END, process.stdout + "\n")
 
-        except FileNotFoundError: # [cite: 730]
+        except FileNotFoundError: 
              # Handle command not found error
              # Display path if created
              if temp_input_filepath and not process_info_inserted:
@@ -1119,7 +1109,7 @@ Mode 'query':
              cmd_name = self.jsluice_base_command[0] if self.jsluice_base_command else "jsluice"
              self.jsluice_results_output.insert(tk.END, f"--- Error: Command '{cmd_name}' not found ---\n", ("error", "bold"))
 
-        except Exception as e: # [cite: 730]
+        except Exception as e: 
              # Handle other Python errors during execution
              # Display path if created
              if temp_input_filepath and not process_info_inserted:
@@ -1127,7 +1117,7 @@ Mode 'query':
                  process_info_inserted = True # Mark as inserted
              self.jsluice_results_output.insert(tk.END, f"--- Python Error During Jsluice Execution ---\n{type(e).__name__}: {e}", ("error", "bold"))
              import traceback
-             self.jsluice_results_output.insert(tk.END, f"\n{traceback.format_exc()}", ("error")) # [cite: 731]
+             self.jsluice_results_output.insert(tk.END, f"\n{traceback.format_exc()}", ("error")) 
 
         finally:
             # === File cleanup (os.unlink) is intentionally removed ===
@@ -1154,13 +1144,13 @@ Mode 'query':
         # Define a timeout in seconds
         COMMAND_TIMEOUT = 30 # e.g., 30 seconds
 
-        # *** FIX: Get command from the CORRECT entry widget ***
+        # ***  Get command from the CORRECT entry widget ***
         command_str = self.shell_command_entry.get().strip()
         if not command_str:
             messagebox.showwarning("Input Missing", "Please enter a shell command.")
             return
 
-        # *** FIX: Prepare the CORRECT output area ***
+        # *** Prepare the CORRECT output area ***
         self.shell_command_output.configure(state='normal')
         self.shell_command_output.delete("1.0", tk.END)
         self.shell_command_output.insert(tk.END, f"Running (Timeout={COMMAND_TIMEOUT}s): {command_str}\n\n", ("bold")) # Show timeout
@@ -1184,7 +1174,7 @@ Mode 'query':
                 return_code = process.returncode
 
             except subprocess.TimeoutExpired:
-                 # *** FIX: Use CORRECT output widget ***
+                 # ***  Use CORRECT output widget ***
                 self.shell_command_output.insert(tk.END, f"\n--- Command Timed Out (>{COMMAND_TIMEOUT}s) ---\n", ("error", "bold"))
                 self.shell_command_output.insert(tk.END, "Attempting to terminate process...\n", ("error"))
                 process.kill() # Kill the timed-out process
@@ -1196,11 +1186,11 @@ Mode 'query':
                     stderr = (stderr or "") + f"\nError gathering output after kill: {post_kill_e}"
 
                 return_code = process.returncode # Will likely be a termination signal code
-                 # *** FIX: Use CORRECT output widget ***
+                 # ***  Use CORRECT output widget ***
                 self.shell_command_output.insert(tk.END, f"Process terminated.\n", ("error"))
 
 
-            # *** FIX: Display results in CORRECT output widget ***
+            # ***  Display results in CORRECT output widget ***
             if stdout:
                 self.shell_command_output.insert(tk.END, "--- stdout ---\n", ("bold"))
                 self.shell_command_output.insert(tk.END, stdout + "\n")
@@ -1209,28 +1199,28 @@ Mode 'query':
                 self.shell_command_output.insert(tk.END, stderr + "\n", ("error"))
 
             exit_code_tag = ("error") if return_code != 0 else ()
-             # *** FIX: Use CORRECT output widget ***
+             # ***  Use CORRECT output widget ***
             self.shell_command_output.insert(tk.END, f"\n--- Process finished (Exit Code: {return_code}) ---\n", ("bold",) + exit_code_tag)
 
         except Exception as e:
              # General error handling
-             # *** FIX: Use CORRECT output widget ***
+             # ***  Use CORRECT output widget ***
              self.shell_command_output.insert(tk.END, f"--- Python Error During Shell Execution ---\n{type(e).__name__}: {e}", ("error", "bold"))
              import traceback
-              # *** FIX: Use CORRECT output widget ***
+              # ***  Use CORRECT output widget ***
              self.shell_command_output.insert(tk.END, f"\n{traceback.format_exc()}", ("error"))
              # Ensure process is killed if Popen succeeded but another error occurred
              if process and process.poll() is None:
                  try:
                      process.kill()
-                      # *** FIX: Use CORRECT output widget ***
+                      # ***  Use CORRECT output widget ***
                      self.shell_command_output.insert(tk.END, f"\nProcess killed due to error.\n", ("error"))
                  except Exception as kill_err:
-                      # *** FIX: Use CORRECT output widget ***
+                      # ***  Use CORRECT output widget ***
                      self.shell_command_output.insert(tk.END, f"\nFailed to kill process after error: {kill_err}\n", ("error"))
 
         finally:
-             # *** FIX: Disable the CORRECT output area ***
+             # ***  Disable the CORRECT output area ***
              self.shell_command_output.configure(state='disabled')
 
 # Keep the main execution block
