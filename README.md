@@ -88,6 +88,7 @@ I recently found myself using it at my job to not only analyse IOCs in Articles 
 ## Warning
 * There is no rate limiting for the VirusTotal API queries so if you are submitting a giant amount of hashes / URLs for analysis you may cause a DOS on VirusTotal and get your IP blocked.
 * Timestamped `.js` files created by the "Run Jsluice" button are **not automatically deleted** and will accumulate in your system's temporary directory. Manual cleanup may be required periodically.
+  - Recommend creating a chron job / scheduled task to remove files from /tmp if used regularly.
 
 ## Testing / Help
 * I really want to make this a great and daily use application, so any help / ideas to make this application better is appreciated, feel free to fork or request commits!
